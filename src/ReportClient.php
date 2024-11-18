@@ -55,6 +55,7 @@ class ReportClient
     const FACE_COMPARE = 'report/service/facecompare'; //人脸比对
     const FACE_SERVICE = 'report/service/faceservice'; //人脸比对(cashservice人脸比对)
     const BIOPSY       = 'report/service/biopsy'; //活体
+    const H5BIOPSY       = 'report/service/h5biopsy'; //活体
     const PHONE_AGE    = 'report/service/phoneage'; //在网时长
     const PHONE_OWNER  = 'report/service/phoneowner'; //一人多号
     const FACE_SEARCH  = 'report/service/facesearch'; //人脸搜索
@@ -99,6 +100,9 @@ class ReportClient
     const IP_CHECK = 'report/service/ipcheck'; //IP检测
     const EXPRESSION_CHECK = 'report/service/expressioncheck'; //异常表情检测
     const DEEP_FAKE_CHECK = 'report/service/deepfakecheck'; //人脸造假检测
+    const DEVICE_UUID_CHECK = 'report/service/deviceuuidcheck'; //设备UUID
+    const DEVICE_RISK_LABEL_CHECK = 'report/service/devicerisklabelcheck'; //设备风险标签
+    const USER_CBI_DATA = 'report/service/usercbidata'; //CBI数据
     //印度服务
     const NAME_CHECK   = 'report/service/namecheck'; // 姓名一致性校验
     const BANKCHECK    = 'report/service/bankcheck'; //印度银行卡校验
@@ -825,6 +829,48 @@ class ReportClient
         $data = array_merge($data, $this->reportData);
         // 离线数据存储
         $this->offlineProcess->addLog(self::BIOPSY, $data);
+        // 实时数据上报
+        //$this->realtimeProcess->sendOut(self::BIOPSY, $data);
+        return true;
+    }
+    /**
+     * [H5 biopsy 活体检测]
+     * @author tux (8966723@qq.com) 2019-12-06
+     * @param  [type] $app_package   [description]
+     * @param  [type] $offer_package [description]
+     * @param  [type] $request_id    [每笔调用的唯一索引，平安旧request id，新Authorization]
+     * @param  [type] $return_code   [针对平安活体的返回码，默认99]
+     * @param  [type] $channel_type  [description]
+     * @param  [type] $is_pay        [description]
+     * @param  [string] $order_no    订单号
+     * @param  [type] $country_code  [国家编码]
+     * @param  [type] $request_id_dt    [请求ID]
+     * @param  [type] $request_time  [请求时间]
+     * @return [type]                [description]
+     */
+    public function h5Biopsy($app_package, $offer_package, $request_id, $return_code, $channel_type, $is_pay, $order_no = '', $country_code = self::REPORT_AREA_ID, $request_id_dt = '', $request_time = '')
+    {
+        $res = $this->getDateDetail($request_time);
+        $data = array(
+            'app_package'   => $app_package,
+            'offer_package' => $offer_package,
+            'request_id'    => $request_id,
+            'return_code'   => $return_code,
+            'channel_type'  => $channel_type,
+            'is_pay'        => $is_pay,
+            'order_no'      => $order_no,
+            'country_code'  => $country_code,
+            'create_time'   => time(),
+            'request_id_dt' => $request_id_dt,
+            'report_year'   => $res['year'],
+            'report_month'  => $res['month'],
+            'report_day'    => $res['day'],
+            'report_time'   => $res['time'],
+
+        );
+        $data = array_merge($data, $this->reportData);
+        // 离线数据存储
+        $this->offlineProcess->addLog(self::H5BIOPSY, $data);
         // 实时数据上报
         //$this->realtimeProcess->sendOut(self::BIOPSY, $data);
         return true;
@@ -2687,6 +2733,113 @@ class ReportClient
         $data = array_merge($data, $this->reportData);
         // 离线数据存储
         $this->offlineProcess->addLog(self::DEEP_FAKE_CHECK, $data);
+        return true;
+    }
+
+    /**
+     * 设备UUID
+     * @param $app_package
+     * @param $offer_package
+     * @param $uuid
+     * @param $channel_type
+     * @param $is_pay
+     * @param int $country_code
+     * @param string $request_id
+     * @param string $request_time
+     * @return bool
+     */
+    public function deviceUuidCheck($app_package, $offer_package, $uuid, $channel_type, $is_pay, $country_code = self::REPORT_AREA_ID, $request_id = '', $request_time = '')
+    {
+        $res = $this->getDateDetail($request_time);
+        $data = array(
+            'app_package' => $app_package,
+            'offer_package' => $offer_package,
+            'uuid' => $uuid,
+            'channel_type' => $channel_type,
+            'is_pay' => $is_pay,
+            'country_code' => $country_code,
+            'create_time' => time(),
+            'request_id' => $request_id,
+            'report_year' => $res['year'],
+            'report_month' => $res['month'],
+            'report_day' => $res['day'],
+            'report_time' => $res['time'],
+        );
+        $data = array_merge($data, $this->reportData);
+        // 离线数据存储
+        $this->offlineProcess->addLog(self::DEVICE_UUID_CHECK, $data);
+        return true;
+    }
+
+    /**
+     * 设备风险标签
+     * @param $app_package
+     * @param $offer_package
+     * @param $uuid
+     * @param $label
+     * @param $channel_type
+     * @param $is_pay
+     * @param int $country_code
+     * @param string $request_id
+     * @param string $request_time
+     * @return bool
+     */
+    public function deviceRiskLabelCheck($app_package, $offer_package, $uuid, $label, $channel_type, $is_pay, $country_code = self::REPORT_AREA_ID, $request_id = '', $request_time = '')
+    {
+        $res = $this->getDateDetail($request_time);
+        $data = array(
+            'app_package' => $app_package,
+            'offer_package' => $offer_package,
+            'uuid' => $uuid,
+            'label' => $label,
+            'channel_type' => $channel_type,
+            'is_pay' => $is_pay,
+            'country_code' => $country_code,
+            'create_time' => time(),
+            'request_id' => $request_id,
+            'report_year' => $res['year'],
+            'report_month' => $res['month'],
+            'report_day' => $res['day'],
+            'report_time' => $res['time'],
+        );
+        $data = array_merge($data, $this->reportData);
+        // 离线数据存储
+        $this->offlineProcess->addLog(self::DEVICE_RISK_LABEL_CHECK, $data);
+        return true;
+    }
+
+    /**
+     * CBI 数据请求上报
+     * @param $app_package
+     * @param $offer_package
+     * @param $user_idcard
+     * @param $channel_type
+     * @param $is_pay
+     * @param int $country_code
+     * @param string $request_id
+     * @param string $request_time
+     * @return bool
+     */
+    public function cbiData($app_package, $offer_package, $user_idcard, $channel_type, $is_pay, $country_code = self::REPORT_AREA_ID, $request_id = '', $request_time = '')
+    {
+        $res = $this->getDateDetail($request_time);
+        $data = array(
+            'app_package' => $app_package,
+            'offer_package' => $offer_package,
+            'user_idcard' => $user_idcard,
+            'channel_type' => $channel_type,
+            'is_pay' => $is_pay,
+            'country_code' => $country_code,
+            'create_time' => time(),
+            'request_id' => $request_id,
+            'report_year' => $res['year'],
+            'report_month' => $res['month'],
+            'report_day' => $res['day'],
+            'report_time' => $res['time'],
+        );
+        $data = array_merge($data, $this->reportData);
+        // 离线数据存储
+        $this->offlineProcess->addLog(self::USER_CBI_DATA, $data);
         return true;
     }
 }
