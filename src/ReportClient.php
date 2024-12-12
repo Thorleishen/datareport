@@ -19,6 +19,7 @@ class ReportClient
     private $report_area;//上报地区
     private $projectEnv;
     private $reportData;//上报数据
+    private $countryCode;
 
     const REPORT_AREA_ID = 0; //上报地区：印尼
     const REPORT_AREA_PH = 1;//上报地区：菲律宾
@@ -123,12 +124,13 @@ class ReportClient
      */
     public function __construct($accessKeyId, $accessKeySecret, $countryCode, $projectEnv = 0, $linkType = 0, $logType = 0, $report_area = self::REPORT_AREA_ID, $reportData = array())
     {
-        $this->realtimeProcess  = new RealtimeProcess($projectEnv);
+        //$this->realtimeProcess  = new RealtimeProcess($projectEnv); //实时写入数据库(已废弃)
         $this->offlineProcess   = new OfflineProcess($accessKeyId, $accessKeySecret, $countryCode, $projectEnv, $linkType, $logType);
-        $this->dataWroldProcess = new DataWroldProcess($accessKeyId, $accessKeySecret, $projectEnv);
+        //$this->dataWroldProcess = new DataWroldProcess($accessKeyId, $accessKeySecret, $projectEnv);//实时写入阿里云(废弃)
         $this->report_area = $report_area;
         $this->projectEnv = $projectEnv;
         $this->reportData = $reportData;
+        $this->countryCode = $countryCode;
     }
 
     /**
@@ -176,7 +178,7 @@ class ReportClient
         // 离线数据存储
         $this->offlineProcess->addLog(self::USER_DEVICE, $data);
         // 全球数据上报
-        $this->dataWroldProcess->addLog(self::USER_DEVICE, $data, 2);
+        //$this->dataWroldProcess->addLog(self::USER_DEVICE, $data, 2);
         return true;
     }
     /**
@@ -204,7 +206,7 @@ class ReportClient
         // 离线数据存储
         $this->offlineProcess->addLog(self::USER_ACTIVE, $data);
         // 全球数据上报
-        $this->dataWroldProcess->addLog(self::USER_ACTIVE, $data, 2);
+        //$this->dataWroldProcess->addLog(self::USER_ACTIVE, $data, 2);
         return true;
     }
     /**
@@ -235,7 +237,7 @@ class ReportClient
         // 离线数据存储
         $this->offlineProcess->addLog(self::USER_INFO, $data);
         // 全球数据上报
-        $this->dataWroldProcess->addLog(self::USER_INFO, $data, 2);
+        //$this->dataWroldProcess->addLog(self::USER_INFO, $data, 2);
         return true;
     }
 
@@ -287,7 +289,7 @@ class ReportClient
         // 离线数据存储
         $this->offlineProcess->addLog(self::USER_ORDER, $data);
         // 全球数据上报
-        $this->dataWroldProcess->addLog(self::USER_ORDER, $data, 2);
+        //$this->dataWroldProcess->addLog(self::USER_ORDER, $data, 2);
         return true;
     }
 
@@ -391,7 +393,7 @@ class ReportClient
         // 离线数据存储
         $this->offlineProcess->addLog(self::APP_INSTALL, $data);
         // 全球数据上报
-        $this->dataWroldProcess->addLog(self::APP_INSTALL, $data, 1);
+        //$this->dataWroldProcess->addLog(self::APP_INSTALL, $data, 1);
         return true;
     }
     /**
@@ -435,7 +437,7 @@ class ReportClient
         // 离线数据存储
         $this->offlineProcess->addLog(self::OFFER_INSTALL, $data);
         // 全球数据上报
-        $this->dataWroldProcess->addLog(self::OFFER_INSTALL, $data, 1);
+        //$this->dataWroldProcess->addLog(self::OFFER_INSTALL, $data, 1);
         return true;
     }
     /**
@@ -1401,6 +1403,16 @@ class ReportClient
      */
     public function smsReceive($partner_id, $app_package, $user_mobile, $sms_type = 1001,$request_id = '')
     {
+        //新短信系统回填
+        try {
+            $smsReport = new SmsReportClient($this->countryCode,$this->projectEnv);
+            $smsRptResult = $smsReport->successCallback($request_id);
+        }catch (\Exception $e){
+            $smsRptResult = '';
+        }catch (\Throwable $e){
+            $smsRptResult = '';
+        }
+
         $data = array(
             'partner_id'  => $partner_id,
             'app_package' => $app_package,
@@ -1409,14 +1421,11 @@ class ReportClient
             'create_time' => time(),
             'country_code' => $this->report_area,
             'request_id' => $request_id,
+            'sms_endpoint_result' => $smsRptResult
         );
         $data = array_merge($data, $this->reportData);
         // 离线数据存储
         $this->offlineProcess->addLog(self::SMS_RECEIVE, $data);
-
-        //新短信系统回填
-        $smsReport = new SmsReportClient($this->projectEnv);
-        $smsReport->successCallback($request_id);
 
         return true;
     }
@@ -1460,7 +1469,7 @@ class ReportClient
         // 离线数据存储
         $this->offlineProcess->addLog(self::USER_INFO, $data);
         // 全球数据上报
-        $this->dataWroldProcess->addLog(self::USER_INFO, $data, 2);
+        //$this->dataWroldProcess->addLog(self::USER_INFO, $data, 2);
         return true;
     }
 
@@ -1582,7 +1591,7 @@ class ReportClient
         );
         $data = array_merge($data, $this->reportData);
         // 全球数据上报
-        $this->dataWroldProcess->addLog(self::OFFER_PRICE, $data, 2);
+        //$this->dataWroldProcess->addLog(self::OFFER_PRICE, $data, 2);
         return true;
     }
 
@@ -1610,7 +1619,7 @@ class ReportClient
         );
         $data = array_merge($data, $this->reportData);
         // 全球数据上报
-        $this->dataWroldProcess->addLog(self::USER_PRIMARY, $data, 2);
+        //$this->dataWroldProcess->addLog(self::USER_PRIMARY, $data, 2);
         return true;
     }
 
